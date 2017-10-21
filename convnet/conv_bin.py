@@ -11,7 +11,7 @@ img_dim = 20
 batch_size = 16
 learning_rate = 0.001
 num_steps = 1000
-num_epochs = 5
+num_epochs = 20
 dropout = 0.75
 num_classes = 2
 
@@ -32,7 +32,7 @@ def get_batch():    # X: (batch_size,28,28), Y: (batch_size,2)
         Y.append(y_)
     return X,Y
 
-def bin1(X):
+def bin_cl(X):
     X = tf.reshape(X,shape=[-1,img_dim,img_dim,1])    #
     # conv, conv, fc, fc
     c1 = tf.layers.conv2d(X,32,5,activation=tf.nn.relu)
@@ -50,9 +50,9 @@ def bin1(X):
 X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim))
 Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
-loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(Y,bin1(X)))
+loss = tf.losses.softmax_cross_entropy(Y,bin_cl(X))    # tf.reduce_mean(tf.losses.mean_squared_error(Y,bin_cl(X)))
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
-eq = tf.equal(tf.argmax(bin1(X),1),tf.argmax(Y,1))
+eq = tf.equal(tf.argmax(bin_cl(X),1),tf.argmax(Y,1))
 acc = tf.reduce_mean(tf.cast(eq,tf.float32))
 #acc = tf.metrics.accuracy(labels=tf.argmax(Y,axis=0),predictions=tf.argmax(bin1(X),axis=0))
 
