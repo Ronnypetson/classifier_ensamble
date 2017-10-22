@@ -5,9 +5,9 @@ import numpy as np
 import os, random
 
 img_dir = '../../converted/segmented/cropped/'
-trem_dir = 'TREMULOUS/'
+trem_dir = 'NON-TREMULOUS/'
 img_dim = 20
-batch_size = 16
+batch_size = 48
 learning_rate = 0.001
 num_steps = 1000
 num_epochs = 20
@@ -25,6 +25,8 @@ def get_batch():    # X: (batch_size,28,28), Y: (batch_size,4)
         #print(fl_loc+fl)
         img = cv2.imread(fl_loc+fl,0)
         img = cv2.resize(img,(img_dim,img_dim))
+        _,img = cv2.threshold(img,200,255,cv2.THRESH_BINARY)  #
+        #img = cv2.medianBlur(img,3) #
         X.append(img)
         y_ = [0.0,0.0,0.0,0.0]
         y_[class_] = 1.0
@@ -34,14 +36,14 @@ def get_batch():    # X: (batch_size,28,28), Y: (batch_size,4)
 def vowel_cl(X):
     X = tf.reshape(X,shape=[-1,img_dim,img_dim,1])    #
     # conv, conv, fc, fc
-    c1 = tf.layers.conv2d(X,32,5,activation=tf.nn.relu)
+    c1 = tf.layers.conv2d(X,8,5,activation=tf.nn.relu) # 32
     c1 = tf.layers.max_pooling2d(c1,2,2)
     #
-    c2 = tf.layers.conv2d(c1,64,3,activation=tf.nn.relu)
+    c2 = tf.layers.conv2d(c1,16,3,activation=tf.nn.relu)    # 64
     c2 = tf.layers.max_pooling2d(c2,2,2)
     #
     fc = tf.contrib.layers.flatten(c2)
-    fc = tf.layers.dense(fc,200)
+    fc = tf.layers.dense(fc,50)    # 200
     fc = tf.layers.dropout(fc,rate=dropout)
     fc2 = tf.layers.dense(fc,num_classes)
     return tf.nn.softmax(fc2)
@@ -49,7 +51,7 @@ def vowel_cl(X):
 X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim))
 Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
-loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(Y,vowel_cl(X)))
+loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(Y,1),logits=vowel_cl(X)))
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 eq = tf.equal(tf.argmax(vowel_cl(X),1),tf.argmax(Y,1))
 acc = tf.reduce_mean(tf.cast(eq,tf.float32))
@@ -63,7 +65,7 @@ with tf.Session() as sess:
         print('Epoch '+str(j))
         for i in range(num_steps):
             x_,y_ = get_batch()
-            _,loss_,acc_,eq_ = sess.run([train,loss,acc,eq],feed_dict={X:x_,Y:y_})
+            _,loss_,acc_ = sess.run([train,loss,acc],feed_dict={X:x_,Y:y_})
             s_loss += loss_
             s_acc += acc_
             if i%100 == 0:

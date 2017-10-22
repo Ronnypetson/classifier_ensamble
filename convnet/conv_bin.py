@@ -45,15 +45,16 @@ def bin_cl(X):
     fc = tf.layers.dense(fc,200)
     fc = tf.layers.dropout(fc,rate=dropout)
     fc2 = tf.layers.dense(fc,num_classes)
-    return tf.nn.softmax(fc2)
+    return fc2  #tf.nn.softmax(fc2)
 
 X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim))
 Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
-loss = tf.losses.softmax_cross_entropy(Y,bin_cl(X))    # tf.reduce_mean(tf.losses.mean_squared_error(Y,bin_cl(X)))
+loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(Y,1),logits=bin_cl(X)))
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 eq = tf.equal(tf.argmax(bin_cl(X),1),tf.argmax(Y,1))
-acc = tf.reduce_mean(tf.cast(eq,tf.float32))
+eqf = tf.cast(eq,tf.float32)
+acc = tf.reduce_mean(eqf)
 #acc = tf.metrics.accuracy(labels=tf.argmax(Y,axis=0),predictions=tf.argmax(bin1(X),axis=0))
 
 with tf.Session() as sess:
@@ -64,12 +65,13 @@ with tf.Session() as sess:
         print('Epoch '+str(j))
         for i in range(num_steps):
             x_,y_ = get_batch()
-            _,loss_,acc_,eq_ = sess.run([train,loss,acc,eq],feed_dict={X:x_,Y:y_})
+            _,loss_,acc_ = sess.run([train,loss,acc],feed_dict={X:x_,Y:y_})
             s_loss += loss_
             s_acc += acc_
             if i%100 == 0:
                 print('loss: ',s_loss/100,'accuracy: ',s_acc/100)
                 #print(eq_)
+                #print(loss_)
                 s_loss = 0.0
                 s_acc = 0.0
 
