@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import os, random
 
+model_ckpt = '/checkpoint/conv_vowel/'
+model_fn = model_ckpt + 'model.ckpt'
 img_dir = '../../converted/segmented/cropped/'
 trem_dir = 'NON-TREMULOUS/'
 img_dim = 20
@@ -12,7 +14,7 @@ learning_rate = 0.001
 num_steps = 1000
 num_epochs = 40
 dropout = 0.75
-classes = ['a/','e/'] #['a/','e/','o/','u/']
+classes = ['o/','u/'] #['a/','e/','o/','u/']
 num_classes = len(classes) # a e o u
 
 def get_batch():    # X: (batch_size,28,28), Y: (batch_size,4)
@@ -33,33 +35,46 @@ def get_batch():    # X: (batch_size,28,28), Y: (batch_size,4)
         Y.append(y_)
     return X,Y
 
+def vowel_fc(X):
+    X_ = tf.reshape(X,shape=[-1,img_dim,img_dim,1])
+    fc = tf.contrib.layers.flatten(X_)
+    fc1 = tf.layers.dense(fc,400,activation=tf.nn.elu)
+    fc2 = tf.layers.dense(fc1,200,activation=tf.nn.elu)
+    fc3 = tf.layers.dense(fc2,num_classes,activation=tf.nn.elu)
+    return tf.nn.softmax(fc3)
+
 def vowel_cl(X):
     X_ = tf.reshape(X,shape=[-1,img_dim,img_dim,1])    #
     # conv, conv, fc, fc
-    c1 = tf.layers.conv2d(X_,16,5,activation=tf.nn.relu) # 32
+    c1 = tf.layers.conv2d(X_,16,5,activation=tf.nn.elu) # 32
     c1 = tf.layers.max_pooling2d(c1,2,2)
     #
-    c2 = tf.layers.conv2d(c1,32,3,activation=tf.nn.relu)    # 64
+    c2 = tf.layers.conv2d(c1,32,3,activation=tf.nn.elu)    # 64
     c2 = tf.layers.max_pooling2d(c2,2,2)
     #
     fc = tf.contrib.layers.flatten(c2)
-    #fc = tf.layers.dense(fc,50)    # 200
+    fc = tf.layers.dense(fc,200,activation=tf.nn.elu)    # 200
     #fc = tf.layers.dropout(fc,rate=dropout)
-    fc2 = tf.layers.dense(fc,num_classes,activation=tf.nn.relu)
+    fc2 = tf.layers.dense(fc,num_classes,activation=tf.nn.elu)
     return tf.nn.softmax(fc2)
 
 X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim))
 Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
 #loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(Y,1),logits=vowel_cl(X))
-loss = tf.losses.softmax_cross_entropy(onehot_labels=Y,logits=vowel_cl(X))
+loss = tf.losses.softmax_cross_entropy(onehot_labels=Y,logits=vowel_fc(X))
 #loss = tf.losses.mean_squared_error(Y,vowel_cl(X))
-eq = tf.equal(tf.argmax(vowel_cl(X),1),tf.argmax(Y,1))
+eq = tf.equal(tf.argmax(vowel_fc(X),1),tf.argmax(Y,1))
 acc = tf.reduce_mean(tf.cast(eq,tf.float32))
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
+    saver = tf.train.Saver() # g.params_named;  #saver is associated with g.params_named variables
+    if os.path.isfile(model_fn+'.meta'):
+        saver.restore(sess,model_fn)
+    else:
+        sess.run(tf.global_variables_initializer())
+    #
     s_loss = 0.0
     s_acc = 0.0
     for j in range(num_epochs):
@@ -74,4 +89,6 @@ with tf.Session() as sess:
                 #print(eq_)
                 s_loss = 0.0
                 s_acc = 0.0
+                if i%1000 == 999:
+                    saver.save(sess,model_fn)
 
