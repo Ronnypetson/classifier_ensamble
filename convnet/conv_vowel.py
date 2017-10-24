@@ -6,15 +6,15 @@ import os, random
 
 model_ckpt = '/checkpoint/conv_vowel/'
 model_fn = model_ckpt + 'model.ckpt'
-img_dir = '../../converted/segmented/cropped/'
-trem_dir = 'NON-TREMULOUS/'
+img_dir = '../../converted/augmented/'    #'segmented/cropped/'
+trem_dir = 'TREMULOUS/'
 img_dim = 20
-batch_size = 48
+batch_size = 16
 learning_rate = 0.001
 num_steps = 1000
-num_epochs = 40
+num_epochs = 80
 dropout = 0.75
-classes = ['o/','u/'] #['a/','e/','o/','u/']
+classes = ['a/','e/','o/','u/'] #['a/','e/','o/','u/']
 num_classes = len(classes) # a e o u
 
 def get_batch():    # X: (batch_size,28,28), Y: (batch_size,4)
@@ -24,8 +24,10 @@ def get_batch():    # X: (batch_size,28,28), Y: (batch_size,4)
         class_ = random.randint(0,num_classes-1)
         fl_loc = img_dir+trem_dir+classes[class_]
         fl = random.choice(os.listdir(fl_loc))
+        #print(class_,fl)
         #print(fl_loc+fl)
         img = cv2.imread(fl_loc+fl,0)
+        img = img/255.0
         #img = cv2.resize(img,(img_dim,img_dim)) #
         #_,img = cv2.threshold(img,127,255,cv2.THRESH_BINARY)  #
         #img = cv2.medianBlur(img,3) #
@@ -36,35 +38,36 @@ def get_batch():    # X: (batch_size,28,28), Y: (batch_size,4)
     return X,Y
 
 def vowel_fc(X):
-    X_ = tf.reshape(X,shape=[-1,img_dim,img_dim,1])
-    fc = tf.contrib.layers.flatten(X_)
-    fc1 = tf.layers.dense(fc,400,activation=tf.nn.elu)
-    fc2 = tf.layers.dense(fc1,200,activation=tf.nn.elu)
-    fc3 = tf.layers.dense(fc2,num_classes,activation=tf.nn.elu)
-    return tf.nn.softmax(fc3)
+      # Create the model
+      x = tf.reshape(X,shape=[-1,400])
+      W = tf.Variable(tf.zeros([400, num_classes]))
+      b = tf.Variable(tf.zeros([num_classes]))
+      y = tf.matmul(x, W) + b
+      return tf.nn.softmax(y)
 
 def vowel_cl(X):
     X_ = tf.reshape(X,shape=[-1,img_dim,img_dim,1])    #
     # conv, conv, fc, fc
-    c1 = tf.layers.conv2d(X_,16,5,activation=tf.nn.elu) # 32
+    c1 = tf.layers.conv2d(X_,32,5,activation=tf.nn.relu) # 32
     c1 = tf.layers.max_pooling2d(c1,2,2)
     #
-    c2 = tf.layers.conv2d(c1,32,3,activation=tf.nn.elu)    # 64
+    c2 = tf.layers.conv2d(c1,64,3,activation=tf.nn.relu)    # 64
     c2 = tf.layers.max_pooling2d(c2,2,2)
     #
     fc = tf.contrib.layers.flatten(c2)
-    fc = tf.layers.dense(fc,200,activation=tf.nn.elu)    # 200
-    #fc = tf.layers.dropout(fc,rate=dropout)
-    fc2 = tf.layers.dense(fc,num_classes,activation=tf.nn.elu)
-    return tf.nn.softmax(fc2)
+    fc = tf.layers.dense(fc,200,activation=tf.nn.relu)    # 200
+    fc = tf.layers.dropout(fc,rate=dropout)
+    fc2 = tf.layers.dense(fc,num_classes,activation=None)
+    return fc2
 
 X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim))
 Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
 #loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(Y,1),logits=vowel_cl(X))
-loss = tf.losses.softmax_cross_entropy(onehot_labels=Y,logits=vowel_fc(X))
-#loss = tf.losses.mean_squared_error(Y,vowel_cl(X))
-eq = tf.equal(tf.argmax(vowel_fc(X),1),tf.argmax(Y,1))
+#loss = tf.losses.softmax_cross_entropy(onehot_labels=Y,logits=vowel_cl(X))
+output_ = vowel_fc(X)
+loss = tf.losses.mean_squared_error(Y,output_)
+eq = tf.equal(tf.argmax(output_,1),tf.argmax(Y,1))
 acc = tf.reduce_mean(tf.cast(eq,tf.float32))
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
