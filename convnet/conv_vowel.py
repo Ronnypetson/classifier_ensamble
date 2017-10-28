@@ -4,19 +4,24 @@ import cv2
 import numpy as np
 import os, random
 
-model_ckpt = '/checkpoint/conv_vowel/'
-model_fn = model_ckpt + 'model.ckpt'
-img_dir = '../../converted/segmented/cropped/'  #'augmented/'
-train_dir = 'TREMULOUS/'
-test_dir = 'test/TREMULOUS/'
-img_dim = 20
-batch_size = 64
-learning_rate = 0.001
+###
+train_dir = 'Thorpe/'
+test_dir = 'test/'+train_dir
 num_steps = 1000
 num_epochs = 1
+batch_size = 64
+cl_type = 'cl'
+#
+model_ckpt = '/checkpoint/conv_vowel/'
+model_fn = model_ckpt+train_dir+cl_type+'_'+str(batch_size)+'_'+str(num_epochs*num_steps)+'_model.ckpt'
+img_dir = '../../converted/segmented/cropped/'  #'augmented/'
+#
+img_dim = 20
+learning_rate = 0.001
 dropout = 0.75
 classes = ['a/','e/','o/','u/'] #['a/','e/','o/','u/']
 num_classes = len(classes) # a e o u
+###
 
 def get_test(test_directory=test_dir):
     X = []
@@ -81,7 +86,11 @@ Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
 #loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(Y,1),logits=vowel_cl(X))
 #loss = tf.losses.softmax_cross_entropy(onehot_labels=Y,logits=vowel_cl(X))
-output_ = vowel_cl(X)
+if cl_type == 'cl':
+    output_ = vowel_cl(X)
+elif cl_type == 'fc':
+    output_ = vowel_fc(X)
+
 loss = tf.losses.mean_squared_error(Y,output_)
 eq = tf.equal(tf.argmax(output_,1),tf.argmax(Y,1))
 acc = tf.reduce_mean(tf.cast(eq,tf.float32))

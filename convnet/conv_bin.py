@@ -4,17 +4,20 @@ import cv2
 import numpy as np
 import os, random
 
-model_ckpt = '/checkpoint/conv_bin/'
-model_fn = model_ckpt + 'model.ckpt'
-img_dir = '../../converted/segmented/cropped/'
-char_dir = ['TREMULOUS/','Thorpe/']
-test_char_dir = ['test/TREMULOUS/','test/Thorpe/']
-vowel_dir = ['a/','e/','o/','u/']
-img_dim = 20
-batch_size = 16
-learning_rate = 0.001
+char_dir = ['Thorpe/','NON-TREMULOUS/']
+test_char_dir = ['test/'+char_dir[0],'test/'+char_dir[1]]
 num_steps = 1000
-num_epochs = 1
+num_epochs = 5
+batch_size = 16
+cl_type = 'cl'
+#
+model_ckpt = '/checkpoint/conv_bin/'
+model_fn = model_ckpt+char_dir[0][:-1]+'_'+char_dir[1]+cl_type+'_'+str(batch_size)+'_'+str(num_epochs*num_steps)+'_model.ckpt'
+img_dir = '../../converted/segmented/cropped/'
+vowel_dir = ['a/','e/','o/','u/']
+#
+img_dim = 20
+learning_rate = 0.001
 dropout = 0.75
 num_classes = len(char_dir)
 num_vowels = len(vowel_dir)
