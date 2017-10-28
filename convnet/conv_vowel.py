@@ -9,8 +9,8 @@ train_dir = 'Thorpe/'
 test_dir = 'test/'+train_dir
 num_steps = 1000
 num_epochs = 1
-batch_size = 64
-cl_type = 'cl'
+batch_size = 16
+cl_type = 'fc'
 #
 model_ckpt = '/checkpoint/conv_vowel/'
 model_fn = model_ckpt+train_dir+cl_type+'_'+str(batch_size)+'_'+str(num_epochs*num_steps)+'_model.ckpt'
@@ -95,6 +95,7 @@ loss = tf.losses.mean_squared_error(Y,output_)
 eq = tf.equal(tf.argmax(output_,1),tf.argmax(Y,1))
 acc = tf.reduce_mean(tf.cast(eq,tf.float32))
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+confusion = tf.confusion_matrix(labels=tf.argmax(Y,1),predictions=tf.argmax(output_,1))   # ,num_classes=num_classes
 
 with tf.Session() as sess:
     saver = tf.train.Saver()
@@ -114,8 +115,10 @@ with tf.Session() as sess:
             s_loss += loss_
             if i%100 == 99:
                 # test
-                acc_ = sess.run([acc],feed_dict={X:t_x,Y:t_y})
+                conf, acc_ = sess.run([confusion,acc],feed_dict={X:t_x,Y:t_y})
                 print('loss: ',s_loss/100,'accuracy: ',acc_)
+                conf = [r*1.0/sum(r) for r in conf]
+                print(conf)
                 s_loss = 0.0
                 if i%1000 == 999:
                     saver.save(sess,model_fn)
