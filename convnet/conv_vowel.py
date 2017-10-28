@@ -118,6 +118,7 @@ with tf.Session() as sess:
                 conf, acc_ = sess.run([confusion,acc],feed_dict={X:t_x,Y:t_y})
                 print('loss: ',s_loss/100,'accuracy: ',acc_)
                 conf = [r*1.0/sum(r) for r in conf]
+                conf = [r.tolist() for r in conf]
                 print(conf)
                 s_loss = 0.0
                 if i%1000 == 999:
