@@ -7,13 +7,13 @@ import os, random
 model_ckpt = '/checkpoint/conv_vowel/'
 model_fn = model_ckpt + 'model.ckpt'
 img_dir = '../../converted/segmented/cropped/'  #'augmented/'
-train_dir = 'NON-TREMULOUS/'
-test_dir = 'TREMULOUS/'
+train_dir = 'TREMULOUS/'
+test_dir = 'test/TREMULOUS/'
 img_dim = 20
-batch_size = 16
+batch_size = 64
 learning_rate = 0.001
 num_steps = 1000
-num_epochs = 5
+num_epochs = 1
 dropout = 0.75
 classes = ['a/','e/','o/','u/'] #['a/','e/','o/','u/']
 num_classes = len(classes) # a e o u
@@ -81,36 +81,33 @@ Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
 #loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(Y,1),logits=vowel_cl(X))
 #loss = tf.losses.softmax_cross_entropy(onehot_labels=Y,logits=vowel_cl(X))
-output_ = vowel_fc(X)
+output_ = vowel_cl(X)
 loss = tf.losses.mean_squared_error(Y,output_)
 eq = tf.equal(tf.argmax(output_,1),tf.argmax(Y,1))
 acc = tf.reduce_mean(tf.cast(eq,tf.float32))
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 with tf.Session() as sess:
-    saver = tf.train.Saver() # g.params_named;  #saver is associated with g.params_named variables
+    saver = tf.train.Saver()
     if os.path.isfile(model_fn+'.meta'):
         saver.restore(sess,model_fn)
     else:
         sess.run(tf.global_variables_initializer())
     #
     s_loss = 0.0
-    #s_acc = 0.0
+    t_x,t_y = get_test()    # test batch for evaluating accuracy
+    #
     for j in range(num_epochs):
         print('Epoch '+str(j))
         for i in range(num_steps):
             x_,y_ = get_batch()
             _,loss_ = sess.run([train,loss],feed_dict={X:x_,Y:y_})
             s_loss += loss_
-            #s_acc += acc_
             if i%100 == 99:
                 # test
-                x_,y_ = get_test()
-                acc_ = sess.run([acc],feed_dict={X:x_,Y:y_})
+                acc_ = sess.run([acc],feed_dict={X:t_x,Y:t_y})
                 print('loss: ',s_loss/100,'accuracy: ',acc_)
-                #print(eq_)
                 s_loss = 0.0
-                #s_acc = 0.0
                 if i%1000 == 999:
                     saver.save(sess,model_fn)
 
