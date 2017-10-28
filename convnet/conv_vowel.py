@@ -6,23 +6,39 @@ import os, random
 
 model_ckpt = '/checkpoint/conv_vowel/'
 model_fn = model_ckpt + 'model.ckpt'
-img_dir = '../../converted/augmented/'    #'segmented/cropped/'
-trem_dir = 'TREMULOUS/'
+img_dir = '../../converted/segmented/cropped/'  #'augmented/'
+train_dir = 'NON-TREMULOUS/'
+test_dir = 'TREMULOUS/'
 img_dim = 20
 batch_size = 16
 learning_rate = 0.001
 num_steps = 1000
-num_epochs = 80
+num_epochs = 5
 dropout = 0.75
 classes = ['a/','e/','o/','u/'] #['a/','e/','o/','u/']
 num_classes = len(classes) # a e o u
+
+def get_test(test_directory=test_dir):
+    X = []
+    Y = []
+    for i in range(num_classes):
+        fl_loc = img_dir+test_directory+classes[i]
+        fls = os.listdir(fl_loc)
+        for fl in fls:
+            img = cv2.imread(fl_loc+fl,0)
+            img = img/255.0
+            X.append(img)
+            y_ = np.zeros((num_classes),np.float32)
+            y_[i] = 1.0
+            Y.append(y_)
+    return X,Y
 
 def get_batch():    # X: (batch_size,28,28), Y: (batch_size,4)
     X = []
     Y = []
     for i in range(batch_size):  # one-hot encoding
         class_ = random.randint(0,num_classes-1)
-        fl_loc = img_dir+trem_dir+classes[class_]
+        fl_loc = img_dir+train_dir+classes[class_]
         fl = random.choice(os.listdir(fl_loc))
         #print(class_,fl)
         #print(fl_loc+fl)
@@ -56,9 +72,9 @@ def vowel_cl(X):
     #
     fc = tf.contrib.layers.flatten(c2)
     fc = tf.layers.dense(fc,200,activation=tf.nn.relu)    # 200
-    fc = tf.layers.dropout(fc,rate=dropout)
+    #fc = tf.layers.dropout(fc,rate=dropout)
     fc2 = tf.layers.dense(fc,num_classes,activation=None)
-    return fc2
+    return tf.nn.softmax(fc2)
 
 X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim))
 Y = tf.placeholder(tf.float32,shape=(None,num_classes))
@@ -79,19 +95,22 @@ with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
     #
     s_loss = 0.0
-    s_acc = 0.0
+    #s_acc = 0.0
     for j in range(num_epochs):
         print('Epoch '+str(j))
         for i in range(num_steps):
             x_,y_ = get_batch()
-            _,loss_,acc_ = sess.run([train,loss,acc],feed_dict={X:x_,Y:y_})
+            _,loss_ = sess.run([train,loss],feed_dict={X:x_,Y:y_})
             s_loss += loss_
-            s_acc += acc_
+            #s_acc += acc_
             if i%100 == 99:
-                print('loss: ',s_loss/100,'accuracy: ',s_acc/100)
+                # test
+                x_,y_ = get_test()
+                acc_ = sess.run([acc],feed_dict={X:x_,Y:y_})
+                print('loss: ',s_loss/100,'accuracy: ',acc_)
                 #print(eq_)
                 s_loss = 0.0
-                s_acc = 0.0
+                #s_acc = 0.0
                 if i%1000 == 999:
                     saver.save(sess,model_fn)
 
