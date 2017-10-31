@@ -81,8 +81,8 @@ def vowel_cl(X):
     fc2 = tf.layers.dense(fc,num_classes,activation=None)
     return tf.nn.softmax(fc2)
 
-X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim))
-Y = tf.placeholder(tf.float32,shape=(None,num_classes))
+X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim)) # ,name="X"
+Y = tf.placeholder(tf.float32,shape=(None,num_classes)) # ,name="Y"
 
 #loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(Y,1),logits=vowel_cl(X))
 #loss = tf.losses.softmax_cross_entropy(onehot_labels=Y,logits=vowel_cl(X))
@@ -93,7 +93,7 @@ elif cl_type == 'fc':
 
 loss = tf.losses.mean_squared_error(Y,output_)
 eq = tf.equal(tf.argmax(output_,1),tf.argmax(Y,1))
-acc = tf.reduce_mean(tf.cast(eq,tf.float32))
+acc = tf.reduce_mean(tf.cast(eq,tf.float32),name="accuracy")
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 confusion = tf.confusion_matrix(labels=tf.argmax(Y,1),predictions=tf.argmax(output_,1))   # ,num_classes=num_classes
 
