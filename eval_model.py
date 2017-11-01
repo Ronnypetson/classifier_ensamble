@@ -4,10 +4,11 @@ import cv2
 import numpy as np
 import os, random
 
-data_dir = '../converted/segmented/cropped/Thorpe/'
 classes = ['a/','e/','o/','u/']
+authors = ['TREMULOUS/','Thorpe/','NON-TREMULOUS/']
+data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
 num_classes = len(classes)
-model_loc = '/checkpoint/conv_vowel/Thorpe/fc_16_1000_model.ckpt'
+model_loc = '/checkpoint/conv_vowel/TREMULOUS/fc_16_1000_model.ckpt'
 #model_fls = os.listdir(model_loc)
 
 def get_test(test_directory=data_dir):
@@ -27,7 +28,7 @@ def get_test(test_directory=data_dir):
 
 def eval(model_fn=model_loc):
     with tf.Session() as sess:
-        saver = tf.train.import_meta_graph(model_loc+'.meta')
+        saver = tf.train.import_meta_graph(model_fn+'.meta')
         #saver = tf.train.Saver()
         if os.path.isfile(model_fn+'.meta'):
             saver.restore(sess,model_fn)
@@ -39,7 +40,7 @@ def eval(model_fn=model_loc):
         #graph = tf.get_default_graph()
         #X = graph.get_tensor_by_name("X")
         #Y = graph.get_tensor_by_name("Y")
-        print(sess.run('accuracy',feed_dict={'Placeholder:0':t_x,'Placeholder_1:0':t_y}))   # tf.all_variables() # feed_dict={X:t_x,Y:t_y}
+        print(sess.run('accuracy:0',feed_dict={'X:0':t_x,'Y:0':t_y}))   # feed_dict={X:t_x,Y:t_y}
         #for op in tf.get_default_graph().get_operations():
         #    print(str(op.name))
 

@@ -5,7 +5,7 @@ import numpy as np
 import os, random
 
 ###
-train_dir = 'Thorpe/'
+train_dir = 'TREMULOUS/'
 test_dir = 'test/'+train_dir
 num_steps = 1000
 num_epochs = 1
@@ -81,8 +81,8 @@ def vowel_cl(X):
     fc2 = tf.layers.dense(fc,num_classes,activation=None)
     return tf.nn.softmax(fc2)
 
-X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim)) # ,name="X"
-Y = tf.placeholder(tf.float32,shape=(None,num_classes)) # ,name="Y"
+X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim),name="X") # 
+Y = tf.placeholder(tf.float32,shape=(None,num_classes),name="Y") # 
 
 #loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(Y,1),logits=vowel_cl(X))
 #loss = tf.losses.softmax_cross_entropy(onehot_labels=Y,logits=vowel_cl(X))
