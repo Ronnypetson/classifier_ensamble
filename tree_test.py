@@ -14,7 +14,7 @@ from deap import gp
 
 # defined a new primitive set for strongly typed GP
 num_classifiers = 1
-pset = gp.PrimitiveSetTyped("MAIN", itertools.repeat(float,num_classifiers), bool, "IN")
+pset = gp.PrimitiveSetTyped("MAIN", itertools.repeat(float,num_classifiers), float, "IN")
 #
 #pset.addPrimitive(operator.add, [float,float], float)
 #pset.addPrimitive(operator.sub, [float,float], float)
@@ -65,7 +65,7 @@ toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 def main():
-    random.seed(10)
+    #random.seed(10)
     pop = toolbox.population(n=10)  # 100
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
