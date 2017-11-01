@@ -40,7 +40,7 @@ def eval(model_fn=model_loc,data_dir=data_dir):
         #graph = tf.get_default_graph()
         #X = graph.get_tensor_by_name("X")
         #Y = graph.get_tensor_by_name("Y")
-        return sess.run('accuracy:0',feed_dict={'X:0':t_x,'Y:0':t_y})
+        return sess.run('v_fc:0',feed_dict={'X:0':t_x,'Y:0':t_y}),t_y
         #for op in tf.get_default_graph().get_operations():
         #    print(str(op.name))
 

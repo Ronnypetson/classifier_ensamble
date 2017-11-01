@@ -55,9 +55,10 @@ def eval_mod(individual):
     data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
     model_dir = '/checkpoint/conv_vowel/TREMULOUS/'
     model_fn = ['fc_16_1000_model.ckpt','fc_64_1000_model.ckpt']
-    x = [em.eval(model_dir+model_fn[i],data_dir) for i in range(num_classifiers)]
+    output = [em.eval(model_dir+model_fn[i],data_dir) for i in range(num_classifiers)]
+    # Compute ensemble accuracy
     #print(x)
-    return func(x[0],x[1]),
+    return random.random(),
 
 toolbox.register("evaluate",eval_mod)
 toolbox.register("select", tools.selTournament, tournsize=3)
