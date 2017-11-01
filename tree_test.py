@@ -13,7 +13,7 @@ from deap import tools
 from deap import gp
 
 # defined a new primitive set for strongly typed GP
-num_classifiers = 1
+num_classifiers = 2
 pset = gp.PrimitiveSetTyped("MAIN", itertools.repeat(float,num_classifiers), float, "IN")
 #
 #pset.addPrimitive(operator.add, [float,float], float)
@@ -53,10 +53,11 @@ def eval_mod(individual):
     # Transform the tree expression in a callable function
     func = toolbox.compile(expr=individual)
     data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
-    model_loc = '/checkpoint/conv_vowel/TREMULOUS/fc_16_1000_model.ckpt'
-    x = em.eval(model_loc,data_dir)
+    model_dir = '/checkpoint/conv_vowel/TREMULOUS/'
+    model_fn = ['fc_16_1000_model.ckpt','fc_64_1000_model.ckpt']
+    x = [em.eval(model_dir+model_fn[i],data_dir) for i in range(num_classifiers)]
     #print(x)
-    return func(x),
+    return func(x[0],x[1]),
 
 toolbox.register("evaluate",eval_mod)
 toolbox.register("select", tools.selTournament, tournsize=3)
