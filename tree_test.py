@@ -85,7 +85,7 @@ creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 toolbox.register("map",futures.map)
-toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=1, max_=2)
+toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=1, max_=3)  # max_=2
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("compile", gp.compile, pset=pset)
@@ -102,7 +102,7 @@ def eval_mod(individual):
     ens_output = []
     for i in range(len(models_output[0])):
         res = func(models_output[0][i],models_output[1][i])
-        if res is None:
+        if res is None or res is float:
             return 0.0,
         ens_output.append(res)
     # Compute ensemble accuracy
@@ -122,7 +122,7 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 def main():
     #random.seed(10)
-    pop = toolbox.population(n=12)  # 100
+    pop = toolbox.population(n=15)  # 100
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -132,8 +132,8 @@ def main():
     
     algorithms.eaSimple(pop, toolbox, 0.2, 0.1, 30, stats, halloffame=hof)  # 40
     for t in hof:
-        print(str(t))
-
+        print(str(t),eval_mod(t))
+    
     return pop, stats, hof
 
 if __name__ == "__main__":
