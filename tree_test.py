@@ -5,6 +5,7 @@ import itertools
 
 import numpy
 import eval_model as em #
+import tensorflow as tf
 
 from deap import algorithms
 from deap import base
@@ -15,42 +16,40 @@ from deap import gp
 # defined a new primitive set for strongly typed GP
 num_classifiers = 2
 num_classes = 4
-
-#
-class In_type(tuple):
-    def __init__(self):
-        self.list = [(0.0,)*num_classes,(0.0,)*num_classes]
-    def __iter__(self):
-        return iter(self.list)
-
-#
-class Out_type(object):
-    def __init__(self):
-        self.list = (0.0,)*num_classes
-    def __iter__(self):
-        return iter(self.list)
-
-in_type = [(float,)*num_classes,(float,)*num_classes]
-out_type = (float,)*num_classes
-mul_in_type = [(float,)*num_classes,float]
 #
 #
-#pset = gp.PrimitiveSetTyped("MAIN",In_type,out_type,"IN")   # itertools.repeat
+#pset = gp.PrimitiveSetTyped("MAIN",list,list,"IN")   # itertools.repeat
 pset = gp.PrimitiveSet("MAIN",2)
 #
+def listify(a):
+    if not (type(a) is list):   # a is constant
+        return None #[a]*num_classes
+    else:
+        return a
+
+#
+def constify(c):
+    if not(type(c) is float):   # c is list
+        return None #c[0]
+    else:
+        return c
+
+#
 def add_(a,b):
-    if not (type(a) is list) or not (type(b) is list):
-        return None
-    if len(a) != len(b):
+    a = listify(a)
+    b = listify(b)
+    if a is None or b is None:
         return None
     s = []
-    len_ = len(a)
-    for i in range(len_):
+    for i in range(len(a)):
         s.append(a[i]+b[i])
     return s
 
+#
 def mul_(a,c):
-    if not (type(a) is list) or not (type(c) is float):
+    a = listify(a)
+    c = constify(c)
+    if a is None or c is None:
         return None
     s = []
     for e in a:
@@ -91,19 +90,28 @@ toolbox.register("compile", gp.compile, pset=pset)
 
 # define eval(individual) as ensemble testing accuracy on a given dataset
 def eval_mod(individual):
-    # Transform the tree expression in a callable function
-    func = toolbox.compile(expr=individual)
-    data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
-    model_dir = '/checkpoint/conv_vowel/TREMULOUS/'
-    model_fn = ['fc_16_1000_model.ckpt','fc_64_1000_model.ckpt']
-    t_x,t_y = em.get_test(data_dir)
-    models_output = [em.eval(t_x,model_dir+model_fn[i],data_dir) for i in range(num_classifiers)]
-    ens_output = []
-    for i in range(len(models_output[0])):
-        ens_output.append(func(models_output[0][i],models_output[1][i]))
-    # Compute ensemble accuracy
-    
-    return random.random(),
+    with tf.Session() as sess:
+        # Transform the tree expression in a callable function
+        func = toolbox.compile(expr=individual)
+        data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
+        model_dir = '/checkpoint/conv_vowel/TREMULOUS/'
+        model_fn = ['fc_16_1000_model.ckpt','fc_64_1000_model.ckpt']
+        t_x,t_y = em.get_test(data_dir)
+        models_output = [em.eval(sess,t_x,model_dir+model_fn[i],data_dir).tolist() for i in range(num_classifiers)]
+        ens_output = []
+        for i in range(len(models_output[0])):
+            res = func(models_output[0][i],models_output[1][i])
+            if res is None:
+                return 0.0,
+            ens_output.append(res)
+        # Compute ensemble accuracy
+        acc = 0.0
+        for i in range(len(ens_output)):
+            c1 = numpy.argmax(ens_output[i])
+            c2 = numpy.argmax(t_y[i])
+            if c1 == c2:
+                acc += 1.0
+    return acc/len(ens_output),
 
 toolbox.register("evaluate",eval_mod)
 toolbox.register("select", tools.selTournament, tournsize=3)
@@ -113,7 +121,7 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 def main():
     #random.seed(10)
-    pop = toolbox.population(n=10)  # 100
+    pop = toolbox.population(n=20)  # 100
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -121,7 +129,7 @@ def main():
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
     
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 2, stats, halloffame=hof)  # 40
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 10, stats, halloffame=hof)  # 40
     for t in hof:
         print(str(t))
 
