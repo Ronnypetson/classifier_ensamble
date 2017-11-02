@@ -26,7 +26,7 @@ def get_test(test_directory=data_dir):
             Y.append(y_)
     return X,Y
 
-def eval(model_fn=model_loc,data_dir=data_dir):
+def eval(t_x,model_fn=model_loc,data_dir=data_dir):
     with tf.Session() as sess:
         saver = tf.train.import_meta_graph(model_fn+'.meta')
         #saver = tf.train.Saver()
@@ -35,12 +35,13 @@ def eval(model_fn=model_loc,data_dir=data_dir):
         else:
             print("No model to load")
             return None
-        t_x,t_y = get_test(data_dir)
+        #t_x,t_y = get_test(data_dir)
         #print(t_x,t_y)
         #graph = tf.get_default_graph()
         #X = graph.get_tensor_by_name("X")
         #Y = graph.get_tensor_by_name("Y")
-        return sess.run('v_fc:0',feed_dict={'X:0':t_x,'Y:0':t_y}),t_y
+        return sess.run('v_fc:0',feed_dict={'X:0':t_x}) # ,'Y:0':t_y
         #for op in tf.get_default_graph().get_operations():
         #    print(str(op.name))
+#print(eval(get_test()[0]))
 

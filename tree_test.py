@@ -14,30 +14,71 @@ from deap import gp
 
 # defined a new primitive set for strongly typed GP
 num_classifiers = 2
-pset = gp.PrimitiveSetTyped("MAIN", itertools.repeat(float,num_classifiers), float, "IN")
+num_classes = 4
+
 #
-#pset.addPrimitive(operator.add, [float,float], float)
+class In_type(tuple):
+    def __init__(self):
+        self.list = [(0.0,)*num_classes,(0.0,)*num_classes]
+    def __iter__(self):
+        return iter(self.list)
+
+#
+class Out_type(object):
+    def __init__(self):
+        self.list = (0.0,)*num_classes
+    def __iter__(self):
+        return iter(self.list)
+
+in_type = [(float,)*num_classes,(float,)*num_classes]
+out_type = (float,)*num_classes
+mul_in_type = [(float,)*num_classes,float]
+#
+#
+#pset = gp.PrimitiveSetTyped("MAIN",In_type,out_type,"IN")   # itertools.repeat
+pset = gp.PrimitiveSet("MAIN",2)
+#
+def add_(a,b):
+    if not (type(a) is list) or not (type(b) is list):
+        return None
+    if len(a) != len(b):
+        return None
+    s = []
+    len_ = len(a)
+    for i in range(len_):
+        s.append(a[i]+b[i])
+    return s
+
+def mul_(a,c):
+    if not (type(a) is list) or not (type(c) is float):
+        return None
+    s = []
+    for e in a:
+        s.append(e*c)
+    return s
+
+pset.addPrimitive(add_, 2)
 #pset.addPrimitive(operator.sub, [float,float], float)
-#pset.addPrimitive(operator.mul, [float,float], float)
-pset.addPrimitive(max, [float,float], float)
-pset.addPrimitive(min, [float,float], float)
+pset.addPrimitive(mul_, 2)
+#pset.addPrimitive(max, [float,float], float)
+#pset.addPrimitive(min, [float,float], float)
 #pset.addPrimitive(operator.neg, [float],float)
-pset.addPrimitive(operator.lt, [float, float], bool)
+#pset.addPrimitive(operator.lt, [float, float], bool)
 #pset.addPrimitive(operator.eq, [float, float], bool)
 
 # terminals
-pset.addTerminal(False, bool)
-pset.addTerminal(True, bool)
-#pset.addTerminal(0.0, float)
-#pset.addTerminal(0.1, float)
-#pset.addTerminal(0.2, float)
-#pset.addTerminal(0.3, float)
-#pset.addTerminal(0.4, float)
-#pset.addTerminal(0.5, float)
-#pset.addTerminal(0.6, float)
-#pset.addTerminal(0.7, float)
-#pset.addTerminal(0.8, float)
-#pset.addTerminal(0.9, float)
+#pset.addTerminal(False, bool)
+#pset.addTerminal(True, bool)
+pset.addTerminal(0.0)
+pset.addTerminal(0.1)
+pset.addTerminal(0.2)
+pset.addTerminal(0.3)
+pset.addTerminal(0.4)
+pset.addTerminal(0.5)
+pset.addTerminal(0.6)
+pset.addTerminal(0.7)
+pset.addTerminal(0.8)
+pset.addTerminal(0.9)
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
@@ -55,9 +96,13 @@ def eval_mod(individual):
     data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
     model_dir = '/checkpoint/conv_vowel/TREMULOUS/'
     model_fn = ['fc_16_1000_model.ckpt','fc_64_1000_model.ckpt']
-    output = [em.eval(model_dir+model_fn[i],data_dir) for i in range(num_classifiers)]
+    t_x,t_y = em.get_test(data_dir)
+    models_output = [em.eval(t_x,model_dir+model_fn[i],data_dir) for i in range(num_classifiers)]
+    ens_output = []
+    for i in range(len(models_output[0])):
+        ens_output.append(func(models_output[0][i],models_output[1][i]))
     # Compute ensemble accuracy
-    #print(x)
+    
     return random.random(),
 
 toolbox.register("evaluate",eval_mod)
