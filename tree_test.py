@@ -11,7 +11,7 @@ from deap import base
 from deap import creator
 from deap import tools
 from deap import gp
-from scoop import futures
+#from scoop import futures
 
 #
 def listify(a):
@@ -65,7 +65,6 @@ def eval_mod(individual):
         c2 = numpy.argmax(t_y[i])
         if c1 == c2:
             acc += 1.0
-    print(str(individual))
     return acc/len(ens_output),
 
 # defined a new primitive set for strongly typed GP
@@ -96,7 +95,7 @@ creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
-toolbox.register("map",futures.map)
+#toolbox.register("map",futures.map)
 toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=2, max_=3)  # max_=2
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -122,7 +121,6 @@ stats.register("max", numpy.max)
 algorithms.eaSimple(pop, toolbox, 0.2, 0.1, 40, stats, halloffame=hof)  # 40
 for t in hof:
     print(str(t),eval_mod(t))
-
 
 #if __name__ == "__main__":
 #    main()
