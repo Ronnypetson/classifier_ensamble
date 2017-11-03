@@ -2,7 +2,7 @@ import random
 import operator
 import csv
 import itertools
-
+import os
 import numpy
 import eval_model as em #
 import tensorflow as tf
@@ -15,25 +15,25 @@ from deap import gp
 from scoop import futures
 
 # defined a new primitive set for strongly typed GP
-num_classifiers = 2
+num_classifiers = 4
 num_classes = 4
 #
 #
 #pset = gp.PrimitiveSetTyped("MAIN",list,list,"IN")   # itertools.repeat
-pset = gp.PrimitiveSet("MAIN",2)
+pset = gp.PrimitiveSet("MAIN",4)    # 2
 #
 def listify(a):
-    if not (type(a) is list):   # a is constant
-        return None #[a]*num_classes
-    else:
+    if type(a) is list:
         return a
+    else:   # a is constant
+        return None
 
 #
 def constify(c):
-    if not(type(c) is float):   # c is list
-        return None #c[0]
-    else:
+    if type(c) is float:
         return c
+    else:   # c is list
+        return None
 
 #
 def add_(a,b):
@@ -61,14 +61,8 @@ pset.addPrimitive(add_, 2)
 #pset.addPrimitive(operator.sub, [float,float], float)
 pset.addPrimitive(mul_, 2)
 #pset.addPrimitive(max, [float,float], float)
-#pset.addPrimitive(min, [float,float], float)
-#pset.addPrimitive(operator.neg, [float],float)
-#pset.addPrimitive(operator.lt, [float, float], bool)
-#pset.addPrimitive(operator.eq, [float, float], bool)
-
 # terminals
 #pset.addTerminal(False, bool)
-#pset.addTerminal(True, bool)
 pset.addTerminal(0.0)
 pset.addTerminal(0.1)
 pset.addTerminal(0.2)
@@ -95,14 +89,20 @@ def eval_mod(individual):
     func = toolbox.compile(expr=individual)
     data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
     model_dir = '/checkpoint/conv_vowel/TREMULOUS/'
-    model_fn = ['fc_16_1000_model.ckpt','fc_64_1000_model.ckpt']
+    #model_fn = []
+    #for fn in os.listdir(model_dir):
+        #if len(fn) >= 5 and fn[-5:] == '.meta':
+            #print(fn)
+            #model_fn.append(fn[:-5])
+    # 'fc_16_5000_model.ckpt','fc_64_5000_model.ckpt'
+    # 'cl_16_5000_model.ckpt','cl_64_5000_model.ckpt',
+    model_fn = ['fc_16_5000_model.ckpt','fc_64_5000_model.ckpt','cl_16_5000_model.ckpt','cl_64_5000_model.ckpt']
     t_x,t_y = em.get_test(data_dir)
-    with tf.Session() as sess:
-        models_output = [em.eval(sess,t_x,model_dir+model_fn[i],data_dir).tolist() for i in range(num_classifiers)]
+    models_output = [em.eval(t_x,model_dir+model_fn[i],data_dir).tolist() for i in range(num_classifiers)]
     ens_output = []
     for i in range(len(models_output[0])):
-        res = func(models_output[0][i],models_output[1][i])
-        if res is None or res is float:
+        res = func(models_output[0][i],models_output[1][i],models_output[2][i],models_output[3][i])
+        if res is None or type(res) is float:
             return 0.0,
         ens_output.append(res)
     # Compute ensemble accuracy
@@ -115,7 +115,7 @@ def eval_mod(individual):
     return acc/len(ens_output),
 
 toolbox.register("evaluate",eval_mod)
-toolbox.register("select", tools.selTournament, tournsize=2)    # 3
+toolbox.register("select", tools.selTournament,tournsize=2)    # 3
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
@@ -130,7 +130,7 @@ def main():
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
     
-    algorithms.eaSimple(pop, toolbox, 0.2, 0.1, 30, stats, halloffame=hof)  # 40
+    algorithms.eaSimple(pop, toolbox, 0.2, 0.1, 20, stats, halloffame=hof)  # 40
     for t in hof:
         print(str(t),eval_mod(t))
     

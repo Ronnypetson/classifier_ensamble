@@ -8,8 +8,8 @@ import os, random
 train_dir = 'TREMULOUS/'
 test_dir = 'test/'+train_dir
 num_steps = 1000
-num_epochs = 1
-batch_size = 16
+num_epochs = 5
+batch_size = 64
 cl_type = 'fc'
 #
 model_ckpt = '/checkpoint/conv_vowel/'
@@ -64,7 +64,7 @@ def vowel_fc(X):
       W = tf.Variable(tf.zeros([400, num_classes]))
       b = tf.Variable(tf.zeros([num_classes]))
       y = tf.matmul(x, W) + b
-      return tf.nn.softmax(y,name="v_fc")
+      return tf.nn.softmax(y,name="out_")
 
 def vowel_cl(X):
     X_ = tf.reshape(X,shape=[-1,img_dim,img_dim,1])    #
@@ -79,7 +79,7 @@ def vowel_cl(X):
     fc = tf.layers.dense(fc,200,activation=tf.nn.relu)    # 200
     #fc = tf.layers.dropout(fc,rate=dropout)
     fc2 = tf.layers.dense(fc,num_classes,activation=None)
-    return tf.nn.softmax(fc2,name="v_cl")
+    return tf.nn.softmax(fc2,name="out_")
 
 X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim),name="X") # 
 Y = tf.placeholder(tf.float32,shape=(None,num_classes),name="Y") # 
