@@ -70,8 +70,9 @@ def eval_mod(individual):
 # defined a new primitive set for strongly typed GP
 num_classifiers = 4
 num_classes = 4
-data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
-model_dir = '/checkpoint/conv_vowel/TREMULOUS/'
+writer = 'Thorpe/'
+data_dir = '../converted/segmented/cropped/test/'+writer
+model_dir = '/checkpoint/conv_vowel/'+writer
 model_fn = ['fc_16_5000_model.ckpt','fc_64_5000_model.ckpt','cl_16_5000_model.ckpt','cl_64_5000_model.ckpt']
 #
 #
@@ -96,7 +97,7 @@ creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 #toolbox.register("map",futures.map)
-toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=2, max_=3)  # max_=2
+toolbox.register("expr", gp.genGrow, pset=pset, min_=1, max_=5)  # max_=2, genHalfAndHalf
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("compile", gp.compile, pset=pset)
@@ -110,15 +111,15 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 #
 t_x, t_y = em.get_test(data_dir)
 models_output = [em.eval(t_x,model_dir+model_fn[i],data_dir).tolist() for i in range(num_classifiers)]
-pop = toolbox.population(n=40)  # 100
-hof = tools.HallOfFame(1)
+pop = toolbox.population(n=300)  # 100
+hof = tools.HallOfFame(10)
 stats = tools.Statistics(lambda ind: ind.fitness.values)
 stats.register("avg", numpy.mean)
 stats.register("std", numpy.std)
 stats.register("min", numpy.min)
 stats.register("max", numpy.max)
 
-algorithms.eaSimple(pop, toolbox, 0.2, 0.1, 40, stats, halloffame=hof)  # 40
+algorithms.eaSimple(pop, toolbox, 0.7, 0.3, 1000, stats, halloffame=hof)  # 40
 for t in hof:
     print(str(t),eval_mod(t))
 
