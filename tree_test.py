@@ -69,9 +69,9 @@ def eval_mod(individual):
 
 # defined a new primitive set for strongly typed GP
 num_classifiers = 4
-num_classes = 4 # 2
+num_classes = 4 ## 2
 writer = 'TREMULOUS/'
-authors_bin = ['TREMULOUS/','NON-TREMULOUS/','Thorpe/']
+authors_bin = ['TREMULOUS/','NON-TREMULOUS/','Thorpe/'] ##
 img_dir_bin = '../converted/segmented/cropped/'
 data_dir = '../converted/segmented/cropped/test/'+writer
 model_dir = '/checkpoint/conv_vowel/'+writer
@@ -111,7 +111,7 @@ toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 #
-t_x, t_y = em.get_test(data_dir)
+t_x, t_y = em.get_test(data_dir)    ## em.get_test_bin(authors_bin,img_dir_bin)
 models_output = [em.eval(t_x,model_dir+model_fn[i],data_dir).tolist() for i in range(num_classifiers)]
 pop = toolbox.population(n=30)  # 100
 hof = tools.HallOfFame(10)
