@@ -4,12 +4,12 @@ import cv2
 import numpy as np
 import os, random
 
-char_dir = ['Thorpe/','NON-TREMULOUS/']
+char_dir = ['TREMULOUS/','NON-TREMULOUS/'] # T NT, T Th, Th NT
 test_char_dir = ['test/'+char_dir[0],'test/'+char_dir[1]]
 num_steps = 1000
 num_epochs = 5
-batch_size = 16
-cl_type = 'cl'
+batch_size = 16 # 16, 64
+cl_type = 'fc'  # cl, fc
 #
 model_ckpt = '/checkpoint/conv_bin/'
 model_fn = model_ckpt+char_dir[0][:-1]+'_'+char_dir[1]+cl_type+'_'+str(batch_size)+'_'+str(num_epochs*num_steps)+'_model.ckpt'
@@ -56,6 +56,14 @@ def get_test():
                 Y.append(y_)
     return X,Y
 
+def bin_fc(X):
+      # Create the model
+      x = tf.reshape(X,shape=[-1,400])
+      W = tf.Variable(tf.zeros([400, num_classes]))
+      b = tf.Variable(tf.zeros([num_classes]))
+      y = tf.matmul(x, W) + b
+      return tf.nn.softmax(y,name='out_')
+
 def bin_cl(X):
     X = tf.reshape(X,shape=[-1,img_dim,img_dim,1])    #
     # conv, conv, fc, fc
@@ -74,7 +82,11 @@ def bin_cl(X):
 X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim),name='X')
 Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
-output_ = bin_cl(X)
+if cl_type == 'cl':
+    output_ = bin_cl(X)
+elif cl_type == 'fc':
+    output_ = bin_fc(X)
+
 loss = tf.losses.mean_squared_error(Y,output_)
 train = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 eq = tf.equal(tf.argmax(output_,1),tf.argmax(Y,1))

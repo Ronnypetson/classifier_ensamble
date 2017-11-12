@@ -25,7 +25,7 @@ def get_test(test_directory=data_dir):
             Y.append(y_)
     return X,Y
 
-def get_test_bin(authors,img_dir):
+def get_test_bin(authors,img_dir):  # authors
     X = []
     Y = []
     num_classes = len(authors)
