@@ -69,9 +69,9 @@ def bin_cl(X):
     fc = tf.layers.dense(fc,200,activation=tf.nn.relu)
     #fc = tf.layers.dropout(fc,rate=dropout)
     fc2 = tf.layers.dense(fc,num_classes,activation=None)
-    return tf.nn.softmax(fc2)
+    return tf.nn.softmax(fc2,name='out_')
 
-X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim))
+X = tf.placeholder(tf.float32,shape=(None,img_dim,img_dim),name='X')
 Y = tf.placeholder(tf.float32,shape=(None,num_classes))
 
 output_ = bin_cl(X)

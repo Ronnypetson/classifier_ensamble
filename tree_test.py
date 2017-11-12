@@ -69,15 +69,17 @@ def eval_mod(individual):
 
 # defined a new primitive set for strongly typed GP
 num_classifiers = 4
-num_classes = 4
-writer = 'Thorpe/'
+num_classes = 4 # 2
+writer = 'TREMULOUS/'
+authors_bin = ['TREMULOUS/','NON-TREMULOUS/','Thorpe/']
+img_dir_bin = '../converted/segmented/cropped/'
 data_dir = '../converted/segmented/cropped/test/'+writer
 model_dir = '/checkpoint/conv_vowel/'+writer
 model_fn = ['fc_16_5000_model.ckpt','fc_64_5000_model.ckpt','cl_16_5000_model.ckpt','cl_64_5000_model.ckpt']
 #
 #
 #pset = gp.PrimitiveSetTyped("MAIN",list,list,"IN")   # itertools.repeat
-pset = gp.PrimitiveSet("MAIN",4)    # 2
+pset = gp.PrimitiveSet("MAIN",num_classifiers)    # 2
 
 pset.addPrimitive(add_, 2)
 pset.addPrimitive(mul_, 2)
@@ -111,7 +113,7 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 #
 t_x, t_y = em.get_test(data_dir)
 models_output = [em.eval(t_x,model_dir+model_fn[i],data_dir).tolist() for i in range(num_classifiers)]
-pop = toolbox.population(n=300)  # 100
+pop = toolbox.population(n=30)  # 100
 hof = tools.HallOfFame(10)
 stats = tools.Statistics(lambda ind: ind.fitness.values)
 stats.register("avg", numpy.mean)
@@ -119,7 +121,7 @@ stats.register("std", numpy.std)
 stats.register("min", numpy.min)
 stats.register("max", numpy.max)
 
-algorithms.eaSimple(pop, toolbox, 0.7, 0.3, 1000, stats, halloffame=hof)  # 40
+algorithms.eaSimple(pop, toolbox, 0.5, 0.3, 20, stats, halloffame=hof)  # 40
 for t in hof:
     print(str(t),eval_mod(t))
 

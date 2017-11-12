@@ -4,10 +4,10 @@ import cv2
 import numpy as np
 import os, random
 
-classes = ['a/','e/','o/','u/']
 authors = ['TREMULOUS/','Thorpe/','NON-TREMULOUS/']
-data_dir = '../converted/segmented/cropped/test/TREMULOUS/'
+classes = ['a/','e/','o/','u/']
 num_classes = len(classes)
+data_dir = '../converted/segmented/cropped/test/TREMULOUS/' # default
 model_loc = '/checkpoint/conv_vowel/TREMULOUS/fc_16_1000_model.ckpt'
 
 def get_test(test_directory=data_dir):
@@ -23,6 +23,27 @@ def get_test(test_directory=data_dir):
             y_ = np.zeros((num_classes),np.float32)
             y_[i] = 1.0
             Y.append(y_)
+    return X,Y
+
+def get_test_bin(authors,img_dir):
+    X = []
+    Y = []
+    num_classes = len(authors)
+    vowel_dir = ['a/','e/','o/','u/']
+    num_vowels = len(vowel_dir)
+    test_char_dir = ['test/'+authors[0],'test/'+authors[1]]
+    for i in range(num_classes):
+        cl_dir = img_dir + test_char_dir[i]
+        for j in range(num_vowels):
+            v_dir = cl_dir + vowel_dir[j]
+            fls = os.listdir(v_dir)
+            for fl in fls:
+                img = cv2.imread(v_dir+fl,0)
+                img = img/255.0
+                X.append(img)
+                y_ = np.zeros((num_classes),np.float32)
+                y_[i] = 1.0
+                Y.append(y_)
     return X,Y
 
 def eval(t_x,model_fn=model_loc,data_dir=data_dir):

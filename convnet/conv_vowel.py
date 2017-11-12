@@ -5,12 +5,12 @@ import numpy as np
 import os, random
 
 ###
-train_dir = 'Thorpe/'
+train_dir = 'TREMULOUS/'
 test_dir = 'test/'+train_dir
 num_steps = 1000
 num_epochs = 5
 batch_size = 64
-cl_type = 'cl'
+cl_type = 'fc'
 #
 model_ckpt = '/checkpoint/conv_vowel/'
 model_fn = model_ckpt+train_dir+cl_type+'_'+str(batch_size)+'_'+str(num_epochs*num_steps)+'_model.ckpt'
