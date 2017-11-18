@@ -71,7 +71,7 @@ def eval_mod(individual):
 num_classifiers = 4
 num_classes = 2 ## 2
 writer = 'TREMULOUS/'
-authors_bin = ['TREMULOUS/','NON-TREMULOUS/']   ## ,'Thorpe/'
+authors_bin = ['TREMULOUS/','Thorpe/']   ## ,'NON-TREMULOUS/'
 img_dir_bin = '../converted/segmented/cropped/'
 data_dir = '../converted/segmented/cropped/test/'+writer
 data_dir_bin = '../converted/segmented/cropped/test/'
@@ -110,11 +110,13 @@ toolbox.register("select", tools.selTournament,tournsize=2)    # 3
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
+toolbox.decorate("mate",gp.staticLimit(operator.attrgetter('height'),40))
+toolbox.decorate("mutate",gp.staticLimit(operator.attrgetter('height'),40))
 
 #
 t_x, t_y = em.get_test_bin(authors_bin,img_dir_bin) ## em.get_test(data_dir)
 models_output = [em.eval(t_x,model_dir_bin+authors_bin[0][:-1]+'_'+authors_bin[1]+model_fn[i]).tolist() for i in range(num_classifiers)]  ## ,data_dir_bin
-pop = toolbox.population(n=30)
+pop = toolbox.population(n=200)
 hof = tools.HallOfFame(10)
 stats = tools.Statistics(lambda ind: ind.fitness.values)
 stats.register("avg", numpy.mean)
@@ -122,7 +124,7 @@ stats.register("std", numpy.std)
 stats.register("min", numpy.min)
 stats.register("max", numpy.max)
 
-algorithms.eaSimple(pop, toolbox, 0.5, 0.3, 20, stats, halloffame=hof)
+algorithms.eaSimple(pop, toolbox, 0.5, 0.3, 300, stats, halloffame=hof)
 for t in hof:
     print(str(t),eval_mod(t))
 
