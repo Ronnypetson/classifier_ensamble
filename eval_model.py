@@ -8,7 +8,7 @@ authors = ['TREMULOUS/','Thorpe/','NON-TREMULOUS/']
 classes = ['a/','e/','o/','u/']
 num_classes = len(classes)
 data_dir = '../converted/segmented/cropped/test/TREMULOUS/' # default
-model_loc = '/checkpoint/conv_vowel/TREMULOUS/fc_16_1000_model.ckpt'
+model_loc = '/checkpoint/conv_bin/TREMULOUS/fc_16_1000_model.ckpt'
 
 def get_test(test_directory=data_dir):
     X = []
@@ -46,7 +46,7 @@ def get_test_bin(authors,img_dir):  # authors
                 Y.append(y_)
     return X,Y
 
-def eval(t_x,model_fn=model_loc,data_dir=data_dir):
+def eval(t_x,model_fn=model_loc):   # ,data_dir=data_dir
     tf.reset_default_graph()
     with tf.Session() as sess:
         saver = tf.train.import_meta_graph(model_fn+'.meta')

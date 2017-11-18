@@ -69,11 +69,12 @@ def eval_mod(individual):
 
 # defined a new primitive set for strongly typed GP
 num_classifiers = 4
-num_classes = 4 ## 2
+num_classes = 2 ## 2
 writer = 'TREMULOUS/'
-authors_bin = ['TREMULOUS/','NON-TREMULOUS/','Thorpe/'] ##
+authors_bin = ['TREMULOUS/','NON-TREMULOUS/']   ## ,'Thorpe/'
 img_dir_bin = '../converted/segmented/cropped/'
 data_dir = '../converted/segmented/cropped/test/'+writer
+data_dir_bin = '../converted/segmented/cropped/test/'
 model_dir = '/checkpoint/conv_vowel/'+writer
 model_dir_bin = '/checkpoint/conv_bin/' ##
 model_fn = ['fc_16_5000_model.ckpt','fc_64_5000_model.ckpt','cl_16_5000_model.ckpt','cl_64_5000_model.ckpt']
@@ -111,8 +112,8 @@ toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 #
-t_x, t_y = em.get_test(data_dir)    ## em.get_test_bin(authors_bin,img_dir_bin)
-models_output = [em.eval(t_x,model_dir+model_fn[i],data_dir).tolist() for i in range(num_classifiers)]
+t_x, t_y = em.get_test_bin(authors_bin,img_dir_bin) ## em.get_test(data_dir)
+models_output = [em.eval(t_x,model_dir_bin+authors_bin[0][:-1]+'_'+authors_bin[1]+model_fn[i]).tolist() for i in range(num_classifiers)]  ## ,data_dir_bin
 pop = toolbox.population(n=30)
 hof = tools.HallOfFame(10)
 stats = tools.Statistics(lambda ind: ind.fitness.values)

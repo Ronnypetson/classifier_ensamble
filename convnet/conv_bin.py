@@ -4,12 +4,12 @@ import cv2
 import numpy as np
 import os, random
 
-char_dir = ['TREMULOUS/','NON-TREMULOUS/'] # T NT, T Th, Th NT
+char_dir = ['Thorpe/','NON-TREMULOUS/'] # T NT, T Th, Th NT
 test_char_dir = ['test/'+char_dir[0],'test/'+char_dir[1]]
 num_steps = 1000
 num_epochs = 5
-batch_size = 16 # 16, 64
-cl_type = 'fc'  # cl, fc
+batch_size = 64 # 16, 64
+cl_type = 'cl'  # cl, fc
 #
 model_ckpt = '/checkpoint/conv_bin/'
 model_fn = model_ckpt+char_dir[0][:-1]+'_'+char_dir[1]+cl_type+'_'+str(batch_size)+'_'+str(num_epochs*num_steps)+'_model.ckpt'
